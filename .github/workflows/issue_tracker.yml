@@ -36,12 +36,12 @@ jobs:
                     }
 
                     function hasLabel(labelName) {
-                        return labels.some(
+                        return context.payload.issue.labels.some(
                         (label) => label.name.toLowerCase() === labelName.toLowerCase()
                         );
                     }
                     
-                    function defaultETC(labels) {
+                    function defaultETC() {
                         const now = new Date();
                     
                         switch (true) {
@@ -68,12 +68,10 @@ jobs:
                 
                     const etc = await parseForETC(comments);
 
-                    console.log(etc);
-
                     const message = `
                     Hello ${context.payload.issue.assignees.map((assignee) => `@${assignee.login}`).join(" ")}, The issue "${context.payload.issue.title}" has been assigned to you.
                     
-                    The Estimated Time of Completion (ETC) for this issue is \`ETC: ${etc && new Date(etc) >= new Date() ? etc : defaultETC(context.payload.issue.labels)}\`.
+                    The Estimated Time of Completion (ETC) for this issue is \`ETC: ${etc && new Date(etc) >= new Date() ? etc : defaultETC()}\`.
                     
                     If you need more time, please update the ETC accordingly in the format of \`ETC: YYYY-MM-DD\`. Thank you!
                     `;
