@@ -132,6 +132,16 @@ jobs:
                                 issue_number: issue.number,
                                 assignees: issue.assignees.map((assignee) => assignee.login),
                             });
+
+                            const message = `
+                            @coronasafe/care-frontend-maintainers The issue "${issue.title}" is overdue, all the assigness have been removed.
+                            `.trim();
+                            await github.rest.issues.createComment({
+                                owner: context.repo.owner,
+                                repo: context.repo.repo,
+                                issue_number: issue.number,
+                                body: message,
+                            });
                             return;
                         }
                     
@@ -143,10 +153,10 @@ jobs:
                             const message = `
                             Hello ${issue.assignees.map((assignee) => `@${assignee.login}`).join(" ")}, 
                             
-                            The issue "${issue.title}" is overdue, please update the ETC in the above format, if ETC is not updated with 2 days, all the assigness will be removed. 
+                            The issue "${issue.title}" is overdue, please update the ETC in the following format \`ETC: YYYY-MM-DD\`, if ETC is not updated within 2 days, all the assigness will be removed. 
                             
                             Thanks.
-                            `;
+                            `.trim();
                             await github.rest.issues.createComment({
                                 owner: context.repo.owner,
                                 repo: context.repo.repo,
