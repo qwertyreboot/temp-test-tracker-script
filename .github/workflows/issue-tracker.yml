@@ -7,6 +7,10 @@ on:
     types: [assigned, reopened]
   workflow_dispatch:
 
+permissions:
+    issues: write
+    contents: read 
+
 jobs:
   handle_issues:
     runs-on: ubuntu-latest
@@ -18,6 +22,7 @@ jobs:
         if: github.event_name == 'issues' && (github.event.action == 'assigned' || github.event.action == 'reopened')
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const issueNumber = context.issue.number;
             const issueTitle = context.payload.issue.title;
@@ -71,6 +76,7 @@ jobs:
         if: github.event_name == 'schedule' || (github.event_name == 'issue_comment' && github.event.action == 'created')
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             function getDaysBetweenDates(date1, date2) {
               const oneDay = 24 * 60 * 60 * 1000;
