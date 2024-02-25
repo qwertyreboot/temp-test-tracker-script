@@ -68,6 +68,8 @@ jobs:
                 
                     const etc = await parseForETC(comments);
 
+                    console.log(etc);
+
                     const message = `
                     Hello ${context.payload.issue.assignees.map((assignee) => `@${assignee.login}`).join(" ")}, The issue "${context.payload.issue.title}" has been assigned to you.
                     
@@ -82,7 +84,7 @@ jobs:
                         body: message,
                     });
 
-            - name: Handle ETA requests and unassignment
+            - name: Handle ETC overdue warnings and unassignment
               if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
               uses: actions/github-script@v7
               with:
