@@ -16,7 +16,7 @@ jobs:
 
       - name: Ask for ETC on assignment or reopening
         if: github.event_name == 'issues' && (github.event.action == 'assigned' || github.event.action == 'reopened')
-        uses: actions/github-script@v5
+        uses: actions/github-script@v7
         with:
           script: |
             const issueNumber = context.issue.number;
@@ -60,7 +60,7 @@ jobs:
             
             If you need more time, please update the ETC accordingly in the format of \`ETC: YYYY-MM-DD\`. Thank you!
             `;
-            github.issues.createComment({
+            github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issueNumber,
@@ -69,7 +69,7 @@ jobs:
 
       - name: Handle ETA requests and unassignment
         if: github.event_name == 'schedule' || (github.event_name == 'issue_comment' && github.event.action == 'created')
-        uses: actions/github-script@v5
+        uses: actions/github-script@v7
         with:
           script: |
             function getDaysBetweenDates(date1, date2) {
@@ -88,11 +88,8 @@ jobs:
                 }
             }
 
-            async function checkForUnassignment(issueNumber, assignees) {
-            }
-
             const issueNumber = context.issue.number;
-            const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
+            const octokit = github.rest.getOctokit(process.env.GITHUB_TOKEN);
 
             if (context.eventName === 'schedule') {
               const { data: issues } = await octokit.issues.listForRepo({
