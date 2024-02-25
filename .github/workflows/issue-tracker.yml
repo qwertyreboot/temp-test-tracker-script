@@ -79,74 +79,77 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             function getDaysBetweenDates(date1, date2) {
-              const oneDay = 24 * 60 * 60 * 1000;
-              return Math.round(Math.abs((date1 - date2) / oneDay));
+                const oneDay = 24 * 60 * 60 * 1000;
+                return Math.round(Math.abs((date1 - date2) / oneDay));
             }
             
             async function parseForETC(comments) {
                 const etcRegex = /ETC:\s*(\d{4}-\d{2}-\d{2})/;
-
+            
                 for (const comment of comments.reverse()) {
-                    const match = etcRegex.exec(comment.body);
-                    if (match) {
-                        return match[1];
-                    }
+                const match = etcRegex.exec(comment.body);
+                if (match) {
+                    return match[1];
+                }
                 }
             }
-
+            
             const issueNumber = context.issue.number;
-            const octokit = github.rest.getOctokit(process.env.GITHUB_TOKEN);
-
-            if (context.eventName === 'schedule') {
-              const { data: issues } = await octokit.issues.listForRepo({
+            
+            const { data: issues } = await github.rest.issues.listForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                state: 'open'
-              });
-
-              for (const issue of issues) {
-                const { data: comments } = await octokit.issues.listComments({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issue.number,
+                state: "open",
+            });
+            
+            for (const issue of issues) {
+                const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
                 });
-
+            
                 const etc = await parseForETC(comments);
                 if (!etc) {
-                    if (issue.assignees.length === 0) {
-                        return;
-                    }
-                }
-                
-                const diff = getDaysBetweenDates(new Date(), new Date(etc))
-                if (diff > 2) {
-                    await octokit.issues.removeAssignees({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        issue_number: issue.number,
-                        assignees: issue.assignees.map(assignee => assignee.login)
-                    });
+                if (issue.assignees.length === 0) {
                     return;
                 }
-                
-                if (diff === 1) {
-                    if (issue.assignees.length === 0) {
-                        return;
-                    }
-
-                    const message = `
-                    Hello ${issue.assignees.map(assignee => `@${assignee.login}`).join(' ')}, 
-                    
-                    The issue "${issue.title}" is overdue, please update the ETC in the above format, if ETC is not updated with 2 days, all the assigness will be removed. 
-                    
-                    Thanks.
-                    `;
-                    await octokit.issues.createComment({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        issue_number: issue.number,
-                        body: message
-                    });
                 }
-              }
+            
+                const diff = getDaysBetweenDates(new Date(), new Date(etc));
+                if (diff > 2) {
+                await github.rest.issues.removeAssignees({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    assignees: issue.assignees.map((assignee) => assignee.login),
+                });
+                return;
+                }
+            
+                if (diff === 1) {
+                if (issue.assignees.length === 0) {
+                    return;
+                }
+            
+                const message = `
+                        Hello ${issue.assignees
+                        .map((assignee) => `@${assignee.login}`)
+                        .join(" ")}, 
+                        
+                        The issue "${
+                        issue.title
+                        }" is overdue, please update the ETC in the above format, if ETC is not updated with 2 days, all the assigness will be removed. 
+                        
+                        Thanks.
+                        `;
+                await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    body: message,
+                });
+                }
             }
+          
+            
