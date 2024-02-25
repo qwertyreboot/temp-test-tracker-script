@@ -21,44 +21,50 @@ jobs:
           script: |
             const issueNumber = context.issue.number;
             const issueTitle = context.payload.issue.title;
-            const assignees = context.payload.issue.assignees.map(assignee => `@${assignee.login}`).join(' ');
+            const assignees = context.payload.issue.assignees
+                .map((assignee) => `@${assignee.login}`)
+                .join(" ");
             const labels = context.payload.issue.labels;
-
+            
             function hasLabel(labelName) {
-              return labels.some(label => label.name.toLowerCase() === labelName.toLowerCase();
+                return labels.some(
+                (label) => label.name.toLowerCase() === labelName.toLowerCase()
+                );
             }
-
+            
             function defaultETC(labels) {
-              const now = new Date();
-              
-              switch (true) {
-                case hasLabel('P0'):
-                  now.setDate(now.getDate() + 1);
-                  return now.toISOString().slice(0, 10);
-                case hasLabel('P1'):
-                  now.setDate(now.getDate() + 2);
-                  return now.toISOString().slice(0, 10);
-                case hasLabel('P2'):
-                  now.setDate(now.getDate() + 3);
-                  return now.toISOString().slice(0, 10);
+                const now = new Date();
+            
+                switch (true) {
+                case hasLabel("P0"):
+                    now.setDate(now.getDate() + 1);
+                    return now.toISOString().slice(0, 10);
+                case hasLabel("P1"):
+                    now.setDate(now.getDate() + 2);
+                    return now.toISOString().slice(0, 10);
+                case hasLabel("P2"):
+                    now.setDate(now.getDate() + 3);
+                    return now.toISOString().slice(0, 10);
                 default:
-                  now.setDate(now.getDate() + 7);
-                  return now.toISOString().slice(0, 10);
-              } 
+                    now.setDate(now.getDate() + 7);
+                    return now.toISOString().slice(0, 10);
+                }
             }
-
+            
             const message = `
             Hello ${assignees}, The issue "${issueTitle}" has been assigned to you.
             
-            The Estimated Time of Completion (ETC) for this issue is `ETC: ${defaultETC(labels)}`.
+            The Estimated Time of Completion (ETC) for this issue is \`ETC: ${defaultETC(
+                labels
+            )}\`.
             
-            If you need more time, please update the ETC accordingly in the format of `ETC: YYYY-MM-DD`. Thank you!
+            If you need more time, please update the ETC accordingly in the format of \`ETC: YYYY-MM-DD\`. Thank you!
             `;
             github.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issueNumber,
-              body: message
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: message,
             });
 
       - name: Handle ETA requests and unassignment
