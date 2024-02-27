@@ -52,10 +52,8 @@ jobs:
                     `;
             
                     
-                    const projectId = 'YOUR_PROJECT_ID';
-                    const fieldId = 'YOUR_FIELD_ID';
-                    const issueNumber = context.issue.number;
-                    const projectId = 'YOUR_PROJECT_ID'; // Replace with your actual Project ID
+                    const projectId = '1';
+                    const fieldId = '79646132';
                     const query = `
                     query($projectId: ID!, $searchString: String!) {
                         node(id: $projectId) {
