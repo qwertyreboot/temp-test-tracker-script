@@ -30,57 +30,80 @@ jobs:
                     const commentBody = context.payload.comment.body;
                     const etcRegex = /ETC:\s*(\d{4}-\d{2}-\d{2})/;
                     const match = etcRegex.exec(commentBody);
-        
+            
                     if (!match) {
-                        console.log("No ETC found in comment.");
-                        return;
+                    console.log("No ETC found in comment.");
+                    return;
                     }
-        
+            
                     const newETC = match[1];
-                    const projectId = '1';
-                    const fieldName = 'Start date';
-        
-                    const items = await github.rest.projects.listItems({
-                    project_id: projectId,
-                    mediaType: {
-                        previews: ['inertia']
-                    }
-                    });
-        
-                    const issueItem = items.data.find(item => item.content_url.includes(`/issues/${issueNumber}`));
-        
-                    if (!issueItem) {
-                    console.log("Issue not found in any project item.");
-                    return;
-                    }
-        
-                    console.log(`Found issue in project item: ${issueItem.id}`);
-        
-                    const fields = await github.rest.projects.listFields({
-                    project_id: projectId,
-                    mediaType: {
-                        previews: ['inertia']
-                    }
-                    });
-        
-                    const etcField = fields.data.find(field => field.name === fieldName);
-        
-                    if (!etcField) {
-                    console.log("ETC field not found in project.");
-                    return;
-                    }
                     
-                    await github.rest.projects.updateItemField({
-                    project_id: projectId,
-                    item_id: issueItem.id,
-                    field_id: etcField.id,
-                    value: newETC,
-                    mediaType: {
-                        previews: ['inertia'] // Required for Projects beta
+                    const mutation = `
+                    mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $value: String!) {
+                        updateProjectV2ItemFieldValue(input: {
+                        projectId: $projectId,
+                        itemId: $itemId,
+                        fieldId: $fieldId,
+                        value: $value
+                        }) {
+                        clientMutationId
+                        }
+                    }
+                    `;
+            
+                    
+                    const projectId = 'YOUR_PROJECT_ID';
+                    const fieldId = 'YOUR_FIELD_ID';
+                    const issueNumber = context.issue.number;
+                    const projectId = 'YOUR_PROJECT_ID'; // Replace with your actual Project ID
+                    const query = `
+                    query($projectId: ID!, $searchString: String!) {
+                        node(id: $projectId) {
+                        ... on ProjectV2 {
+                            items(first: 100, query: $searchString) {
+                            nodes {
+                                id
+                                content {
+                                ... on Issue {
+                                    number
+                                }
+                                }
+                            }
+                            }
+                        }
+                        }
+                    }
+                    `;
+
+                    const searchString = `#${issueNumber}`;
+
+                    const response = await github.graphql(query, {
+                    projectId: projectId,
+                    searchString: searchString,
+                    });
+
+                    const items = response.node.items.nodes;
+                    let itemId = null;
+                    items.forEach(item => {
+                    if (item.content && item.content.number === issueNumber) {
+                        itemId = item.id;
+                        console.log(`Found item ID: ${itemId}`);
                     }
                     });
-        
-                    console.log(`ETC updated to ${newETC} for issue #${issueNumber}`);
+
+                    if (!itemId) {
+                    console.log(`Item ID for issue #${issueNumber} not found.`);
+                    return;
+                    }
+            
+                    const response = await github.graphql(mutation, {
+                    projectId: projectId,
+                    itemId: itemId,
+                    fieldId: fieldId,
+                    value: newETC,
+                    });
+            
+                    console.log(response);
 
             
             - name: Ask for ETC on assignment or reopening
