@@ -5,6 +5,8 @@ on:
         - cron: '0 0 * * *'
     issues:
         types: [assigned, reopened]
+    issue_comment:
+        types: [created, edited]
     workflow_dispatch:
 
 permissions:
@@ -17,6 +19,69 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v2
+
+            - name: Set ETC in the project board
+              if: github.event_name == 'issue_comment'
+              uses: actions/github-script@v7
+              with:
+                github-token: ${{ secrets.GITHUB_TOKEN }}
+                script: |
+                    const issueNumber = context.issue.number;
+                    const commentBody = context.payload.comment.body;
+                    const etcRegex = /ETC:\s*(\d{4}-\d{2}-\d{2})/;
+                    const match = etcRegex.exec(commentBody);
+        
+                    if (!match) {
+                        console.log("No ETC found in comment.");
+                        return;
+                    }
+        
+                    const newETC = match[1];
+                    const projectId = '1';
+                    const fieldName = 'Start date';
+        
+                    const items = await github.rest.projects.listItems({
+                    project_id: projectId,
+                    mediaType: {
+                        previews: ['inertia']
+                    }
+                    });
+        
+                    const issueItem = items.data.find(item => item.content_url.includes(`/issues/${issueNumber}`));
+        
+                    if (!issueItem) {
+                    console.log("Issue not found in any project item.");
+                    return;
+                    }
+        
+                    console.log(`Found issue in project item: ${issueItem.id}`);
+        
+                    const fields = await github.rest.projects.listFields({
+                    project_id: projectId,
+                    mediaType: {
+                        previews: ['inertia']
+                    }
+                    });
+        
+                    const etcField = fields.data.find(field => field.name === fieldName);
+        
+                    if (!etcField) {
+                    console.log("ETC field not found in project.");
+                    return;
+                    }
+                    
+                    await github.rest.projects.updateItemField({
+                    project_id: projectId,
+                    item_id: issueItem.id,
+                    field_id: etcField.id,
+                    value: newETC,
+                    mediaType: {
+                        previews: ['inertia'] // Required for Projects beta
+                    }
+                    });
+        
+                    console.log(`ETC updated to ${newETC} for issue #${issueNumber}`);
+
             
             - name: Ask for ETC on assignment or reopening
               if: github.event_name == 'issues' && (github.event.action == 'assigned' || github.event.action == 'reopened')
