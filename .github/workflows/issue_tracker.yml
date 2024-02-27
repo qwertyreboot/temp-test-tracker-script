@@ -94,14 +94,14 @@ jobs:
                     return;
                     }
             
-                    const response = await github.graphql(mutation, {
+                    const response2 = await github.graphql(mutation, {
                     projectId: projectId,
                     itemId: itemId,
                     fieldId: fieldId,
                     value: newETC,
                     });
             
-                    console.log(response);
+                    console.log(response2);
 
             
             - name: Ask for ETC on assignment or reopening
