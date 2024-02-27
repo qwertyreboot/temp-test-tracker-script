@@ -55,10 +55,10 @@ jobs:
                     const projectId = '1';
                     const fieldId = '79646132';
                     const query = `
-                    query($projectId: ID!, $searchString: String!) {
+                    query($projectId: ID!) {
                         node(id: $projectId) {
                         ... on ProjectV2 {
-                            items(first: 100, query: $searchString) {
+                            items(first: 100) { # Adjust the 'first' value as necessary
                             nodes {
                                 id
                                 content {
@@ -73,11 +73,8 @@ jobs:
                     }
                     `;
 
-                    const searchString = `#${issueNumber}`;
-
                     const response = await github.graphql(query, {
                     projectId: projectId,
-                    searchString: searchString,
                     });
 
                     const items = response.node.items.nodes;
